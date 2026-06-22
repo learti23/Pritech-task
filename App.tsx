@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Task } from './src/types/task';
@@ -21,6 +22,16 @@ type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const TASKS_STORAGE_KEY = '@pritech_tasks';
+
+async function saveTasks(tasks: Task[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+  } catch (error) {
+    console.error('Failed to save tasks to storage', error);
+  }
+}
+
 type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
 type DetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'Details'>;
 
@@ -32,13 +43,31 @@ function HomeScreen({ navigation }: HomeScreenProps) {
 
   useEffect(() => {
     const loadTasks = async () => {
-      const fetchedTasks = await fetchTasksFromAPI();
-      setTasks(fetchedTasks);
-      setIsLoading(false);
+      try {
+        const storedTasks = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
+        if (storedTasks !== null) {
+          setTasks(JSON.parse(storedTasks));
+        } else {
+          const fetchedTasks = await fetchTasksFromAPI();
+          setTasks(fetchedTasks);
+        }
+      } catch (error) {
+        console.error('Failed to load tasks from storage', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadTasks();
   }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    saveTasks(tasks);
+  }, [tasks, isLoading]);
 
   const handleAddTask = () => {
     const title = newTitle.trim();
