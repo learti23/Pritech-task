@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Task } from './src/types/task';
 import { fetchTasksFromAPI } from './src/services/taskService';
 
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [newTitle, setNewTitle] = useState('');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -16,6 +17,23 @@ export default function App() {
 
     loadTasks();
   }, []);
+
+  const handleAddTask = () => {
+    if (!newTitle.trim()) {
+      return;
+    }
+
+    const newTask: Task = {
+      id: Date.now().toString(),
+      title: newTitle,
+      description: 'Ky task u krijua nga useri.',
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    setTasks([newTask, ...tasks]);
+    setNewTitle('');
+  };
 
   const renderTaskCard = ({ item }: { item: Task }) => (
     <View style={styles.taskCard}>
@@ -38,7 +56,7 @@ export default function App() {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#4f46e5" />
       </View>
     );
   }
@@ -46,6 +64,18 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Pritech Task Manager</Text>
+      <View style={styles.formContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Shkruaj një task të ri..."
+          value={newTitle}
+          onChangeText={setNewTitle}
+          placeholderTextColor="#8b95a1"
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
+          <Text style={styles.addButtonText}>Shto</Text>
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={tasks}
         renderItem={renderTaskCard}
@@ -68,6 +98,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     color: '#333',
+  },
+  formContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginRight: 10,
+    fontSize: 16,
+    color: '#1f2937',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  addButton: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 16,
   },
   listContent: {
     paddingHorizontal: 16,
