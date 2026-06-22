@@ -9,10 +9,22 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Task } from './src/types/task';
 import { fetchTasksFromAPI } from './src/services/taskService';
 
-export default function App() {
+type RootStackParamList = {
+  Home: undefined;
+  Details: { task: Task };
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type DetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'Details'>;
+
+function HomeScreen({ navigation }: HomeScreenProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
@@ -82,28 +94,30 @@ export default function App() {
 
   const renderTaskCard = ({ item }: { item: Task }) => (
     <View style={styles.taskCard}>
-      <Text style={styles.taskTitle}>{item.title}</Text>
-      <Text style={styles.taskDescription}>{item.description}</Text>
-      <View style={styles.taskFooter}>
-        <View style={styles.taskFooterLeft}>
-          <Text
-            style={[
-              styles.taskStatus,
-              item.status === 'completed' ? styles.statusCompleted : styles.statusPending,
-            ]}
-          >
-            {item.status}
-          </Text>
-          <Text style={styles.taskDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Details', { task: item })} activeOpacity={0.8}>
+        <Text style={styles.taskTitle}>{item.title}</Text>
+        <Text style={styles.taskDescription}>{item.description}</Text>
+        <View style={styles.taskFooter}>
+          <View style={styles.taskFooterLeft}>
+            <Text
+              style={[
+                styles.taskStatus,
+                item.status === 'completed' ? styles.statusCompleted : styles.statusPending,
+              ]}
+            >
+              {item.status}
+            </Text>
+            <Text style={styles.taskDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+          </View>
         </View>
-        <View style={styles.taskActions}>
-          <TouchableOpacity style={styles.toggleButton} onPress={() => toggleStatus(item.id)}>
-            <Text style={styles.toggleButtonText}>{item.status === 'completed' ? 'Mark Pending' : 'Mark Done'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTask(item.id)}>
-            <Text style={styles.deleteButtonText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
+      </TouchableOpacity>
+      <View style={styles.taskActions}>
+        <TouchableOpacity style={styles.toggleButton} onPress={() => toggleStatus(item.id)}>
+          <Text style={styles.toggleButtonText}>{item.status === 'completed' ? 'Mark Pending' : 'Mark Done'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTask(item.id)}>
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -120,6 +134,9 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.header}>Pritech Task Manager</Text>
       <View style={styles.formContainer}>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
+          <Text style={styles.addButtonText}>Shto</Text>
+        </TouchableOpacity>
         <TextInput
           style={styles.input}
           placeholder="Shkruaj një task të ri..."
@@ -135,9 +152,6 @@ export default function App() {
           placeholderTextColor="#8b95a1"
           multiline
         />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
-          <Text style={styles.addButtonText}>Shto</Text>
-        </TouchableOpacity>
       </View>
       <FlatList
         data={tasks}
@@ -150,8 +164,37 @@ export default function App() {
           </View>
         )}
       />
-      <Toast />
     </View>
+  );
+}
+
+function DetailsScreen({ route }: DetailsScreenProps) {
+  const { task } = route.params;
+
+  return (
+    <View style={styles.detailsContainer}>
+      <Text style={styles.detailsTitle}>{task.title}</Text>
+      <Text style={styles.detailsLabel}>Përshkrimi</Text>
+      <Text style={styles.detailsText}>{task.description}</Text>
+      <Text style={styles.detailsLabel}>Statusi</Text>
+      <Text style={styles.detailsText}>{task.status}</Text>
+      <Text style={styles.detailsLabel}>Krijuar më</Text>
+      <Text style={styles.detailsText}>{new Date(task.createdAt).toLocaleString()}</Text>
+    </View>
+  );
+}
+
+export default function App() {
+  return (
+    <>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Pritech Task Manager' }} />
+          <Stack.Screen name="Details" component={DetailsScreen} options={{ title: 'Detajet e Taskut' }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <Toast />
+    </>
   );
 }
 
@@ -191,7 +234,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'flex-end',
+    marginBottom: 12,
+    alignSelf: 'flex-start',
   },
   addButtonText: {
     color: '#ffffff',
@@ -243,6 +287,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginTop: 12,
   },
   toggleButton: {
     backgroundColor: '#87A7D0',
@@ -292,5 +337,28 @@ const styles = StyleSheet.create({
   taskDate: {
     fontSize: 12,
     color: '#999',
+  },
+  detailsContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    padding: 20,
+  },
+  detailsTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  detailsLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#555',
+    marginTop: 16,
+    marginBottom: 6,
+  },
+  detailsText: {
+    fontSize: 16,
+    color: '#333',
+    lineHeight: 22,
   },
 });
