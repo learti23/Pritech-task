@@ -35,20 +35,29 @@ export default function App() {
     setNewTitle('');
   };
 
+  const deleteTask = (id: string) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  };
+
   const renderTaskCard = ({ item }: { item: Task }) => (
     <View style={styles.taskCard}>
       <Text style={styles.taskTitle}>{item.title}</Text>
       <Text style={styles.taskDescription}>{item.description}</Text>
       <View style={styles.taskFooter}>
-        <Text style={[
-          styles.taskStatus,
-          item.status === 'completed' ? styles.statusCompleted : styles.statusPending
-        ]}>
-          {item.status}
-        </Text>
-        <Text style={styles.taskDate}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
+        <View style={styles.taskFooterLeft}>
+          <Text style={[
+            styles.taskStatus,
+            item.status === 'completed' ? styles.statusCompleted : styles.statusPending
+          ]}>
+            {item.status}
+          </Text>
+          <Text style={styles.taskDate}>
+            {new Date(item.createdAt).toLocaleDateString()}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTask(item.id)}>
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -120,8 +129,8 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: '#4f46e5',
     borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
+    paddingVertical: 10,
+    paddingHorizontal:50,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -162,12 +171,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  taskFooterLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   taskStatus: {
     fontSize: 12,
     fontWeight: '600',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+  },
+  deleteButton: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '650',
   },
   statusCompleted: {
     backgroundColor: '#d4edda',
