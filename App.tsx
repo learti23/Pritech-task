@@ -16,6 +16,7 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -29,6 +30,7 @@ export default function App() {
 
   const handleAddTask = () => {
     const title = newTitle.trim();
+    const description = newDescription.trim();
 
     if (!title) {
       Toast.show({
@@ -42,13 +44,14 @@ export default function App() {
     const newTask: Task = {
       id: Date.now().toString(),
       title,
-      description: 'Ky task u krijua nga useri.',
+      description: description || 'Pa përshkrim.',
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
 
     setTasks([newTask, ...tasks]);
     setNewTitle('');
+    setNewDescription('');
 
     Toast.show({
       type: 'success',
@@ -124,6 +127,14 @@ export default function App() {
           onChangeText={setNewTitle}
           placeholderTextColor="#8b95a1"
         />
+        <TextInput
+          style={[styles.input, styles.descriptionInput]}
+          placeholder="Shto një përshkrim..."
+          value={newDescription}
+          onChangeText={setNewDescription}
+          placeholderTextColor="#8b95a1"
+          multiline
+        />
         <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
           <Text style={styles.addButtonText}>Shto</Text>
         </TouchableOpacity>
@@ -133,6 +144,11 @@ export default function App() {
         renderItem={renderTaskCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No tasks available</Text>
+          </View>
+        )}
       />
       <Toast />
     </View>
@@ -153,18 +169,16 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   formContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 50,
   },
   input: {
-    flex: 1,
+    width: '100%',
     backgroundColor: '#ffffff',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    marginRight: 10,
+    marginBottom: 12,
     fontSize: 16,
     color: '#1f2937',
     borderWidth: 1,
@@ -177,11 +191,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'flex-end',
   },
   addButtonText: {
     color: '#ffffff',
     fontWeight: '700',
     fontSize: 16,
+  },
+  descriptionInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   listContent: {
     paddingHorizontal: 16,
@@ -261,6 +280,14 @@ const styles = StyleSheet.create({
   statusPending: {
     backgroundColor: '#fff3cd',
     color: '#856404',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  emptyText: {
+    color: '#666',
+    fontSize: 16,
   },
   taskDate: {
     fontSize: 12,
