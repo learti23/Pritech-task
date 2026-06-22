@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+} from 'react-native';
+import Toast from 'react-native-toast-message';
 import { Task } from './src/types/task';
 import { fetchTasksFromAPI } from './src/services/taskService';
 
@@ -19,13 +28,20 @@ export default function App() {
   }, []);
 
   const handleAddTask = () => {
-    if (!newTitle.trim()) {
+    const title = newTitle.trim();
+
+    if (!title) {
+      Toast.show({
+        type: 'error',
+        text1: 'Titulli është i zbrazët',
+        text2: 'Ju lutemi shkruani një titull para se të shtoni taskun.',
+      });
       return;
     }
 
     const newTask: Task = {
       id: Date.now().toString(),
-      title: newTitle,
+      title,
       description: 'Ky task u krijua nga useri.',
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -33,10 +49,22 @@ export default function App() {
 
     setTasks([newTask, ...tasks]);
     setNewTitle('');
+
+    Toast.show({
+      type: 'success',
+      text1: 'Task u shtua',
+      text2: 'Tasku juaj u shtua me sukses.',
+    });
   };
 
   const deleteTask = (id: string) => {
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+
+    Toast.show({
+      type: 'info',
+      text1: 'Tasku u fshi',
+      text2: 'Tasku u largua nga lista.',
+    });
   };
 
   const toggleStatus = (id: string) => {
@@ -55,15 +83,15 @@ export default function App() {
       <Text style={styles.taskDescription}>{item.description}</Text>
       <View style={styles.taskFooter}>
         <View style={styles.taskFooterLeft}>
-          <Text style={[
-            styles.taskStatus,
-            item.status === 'completed' ? styles.statusCompleted : styles.statusPending
-          ]}>
+          <Text
+            style={[
+              styles.taskStatus,
+              item.status === 'completed' ? styles.statusCompleted : styles.statusPending,
+            ]}
+          >
             {item.status}
           </Text>
-          <Text style={styles.taskDate}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
+          <Text style={styles.taskDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         </View>
         <View style={styles.taskActions}>
           <TouchableOpacity style={styles.toggleButton} onPress={() => toggleStatus(item.id)}>
@@ -106,6 +134,7 @@ export default function App() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
       />
+      <Toast />
     </View>
   );
 }
@@ -127,7 +156,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 50,
   },
   input: {
     flex: 1,
@@ -145,7 +174,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#87A7D0',
     borderRadius: 12,
     paddingVertical: 10,
-    paddingHorizontal:50,
+    paddingHorizontal: 50,
     justifyContent: 'center',
     alignItems: 'center',
   },
