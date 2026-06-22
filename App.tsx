@@ -39,6 +39,16 @@ export default function App() {
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
   };
 
+  const toggleStatus = (id: string) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id
+          ? { ...task, status: task.status === 'completed' ? 'pending' : 'completed' }
+          : task
+      )
+    );
+  };
+
   const renderTaskCard = ({ item }: { item: Task }) => (
     <View style={styles.taskCard}>
       <Text style={styles.taskTitle}>{item.title}</Text>
@@ -55,9 +65,14 @@ export default function App() {
             {new Date(item.createdAt).toLocaleDateString()}
           </Text>
         </View>
-        <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTask(item.id)}>
-          <Text style={styles.deleteButtonText}>Delete</Text>
-        </TouchableOpacity>
+        <View style={styles.taskActions}>
+          <TouchableOpacity style={styles.toggleButton} onPress={() => toggleStatus(item.id)}>
+            <Text style={styles.toggleButtonText}>{item.status === 'completed' ? 'Mark Pending' : 'Mark Done'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteButton} onPress={() => deleteTask(item.id)}>
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -127,7 +142,7 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
   },
   addButton: {
-    backgroundColor: '#4f46e5',
+    backgroundColor: '#87A7D0',
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal:50,
@@ -176,6 +191,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  taskActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  toggleButton: {
+    backgroundColor: '#87A7D0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  toggleButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   taskStatus: {
     fontSize: 12,
     fontWeight: '600',
@@ -192,11 +223,11 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '650',
+    fontWeight: '600',
   },
   statusCompleted: {
     backgroundColor: '#d4edda',
-    color: '#155724',
+    color: '#005213',
   },
   statusPending: {
     backgroundColor: '#fff3cd',
