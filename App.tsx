@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,6 +22,8 @@ type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const TASKS_STORAGE_KEY = '@pritech_tasks';
+
 type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
 type DetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'Details'>;
 
@@ -30,11 +33,30 @@ function HomeScreen({ navigation }: HomeScreenProps) {
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
+  const saveTasks = async (tasksToSave: Task[]) => {
+    try {
+      await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasksToSave));
+    } catch (error) {
+      console.error('Failed to save tasks', error);
+    }
+  };
+
   useEffect(() => {
     const loadTasks = async () => {
-      const fetchedTasks = await fetchTasksFromAPI();
-      setTasks(fetchedTasks);
-      setIsLoading(false);
+      try {
+        const storedTasks = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
+        if (storedTasks !== null) {
+          setTasks(JSON.parse(storedTasks) as Task[]);
+        } else {
+          const fetchedTasks = await fetchTasksFromAPI();
+          setTasks(fetchedTasks);
+          await saveTasks(fetchedTasks);
+        }
+      } catch (error) {
+        console.error('Failed to load tasks', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadTasks();
@@ -61,7 +83,9 @@ function HomeScreen({ navigation }: HomeScreenProps) {
       createdAt: new Date().toISOString(),
     };
 
-    setTasks([newTask, ...tasks]);
+    const updatedTasks = [newTask, ...tasks];
+    setTasks(updatedTasks);
+    saveTasks(updatedTasks);
     setNewTitle('');
     setNewDescription('');
 
@@ -73,7 +97,11 @@ function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   const deleteTask = (id: string) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    setTasks((prevTasks) => {
+      const updatedTasks = prevTasks.filter((task) => task.id !== id);
+      saveTasks(updatedTasks);
+      return updatedTasks;
+    });
 
     Toast.show({
       type: 'info',
@@ -83,13 +111,15 @@ function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   const toggleStatus = (id: string) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
+    setTasks((prevTasks) => {
+      const updatedTasks: Task[] = prevTasks.map((task) =>
         task.id === id
           ? { ...task, status: task.status === 'completed' ? 'pending' : 'completed' }
           : task
-      )
-    );
+      );
+      saveTasks(updatedTasks);
+      return updatedTasks;
+    });
   };
 
   const renderTaskCard = ({ item }: { item: Task }) => (
